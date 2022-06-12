@@ -5,7 +5,8 @@ import path from 'path'
 import * as osOperations from './system_info/os_command.js'
 import { calculateHash } from './hash/hash.js'
 import { compress, decompress } from './compress/compress.js'
-import { list } from './navigation/navigation.js'
+import { list, up, cd } from './navigation/navigation.js'
+import { rm,cat,rn,cp,mv,add } from './file_operations/fileManager.js'
 
 const osCommands = osOperations.osOperations
 
@@ -13,8 +14,13 @@ const username = process.argv.slice(2)[0].split("=")[1]
 printCommandInfo(`Welcome to the File Manager, ${username}!\n`)
 
 process.stdin.addListener("data",async (data)=>{
-    handleInput(data.toString().replace("\r","").replace("\n","")) 
-     
+    try {
+        await handleInput(data.toString().replace("\r","").replace("\n","")) 
+    }catch(e) {
+        printCommandInfo(`Operation failed`)
+    }
+    
+    printCommandInfo(`You are currently in ${currentDir}\n`) 
 })
 
 process.on('SIGINT', function() {
@@ -32,8 +38,23 @@ async function handleInput(data) {
     if(args[0] == "ls") {
         const res = await list(os.homedir())
         console.log(res)
-        
     }
+    if(args[0] == "up") {
+        currentDir = await up(currentDir)
+    }
+    if(args[0] == "cd") {
+        const res = await cd(args[1])
+        if(res) currentDir = args[1]
+    }
+
+    if(args[0] == "cat"){
+        const res = await cat(args[1])
+        console.log(res) }
+    if(args[0] == "add"){await add(path.join(currentDir, args[1]))}
+    if(args[0] == "rn"){ await rn(args[1],args[2])}
+    if(args[0] == "cp"){ await cp(args[1],args[2])}
+    if(args[0] == "mv"){ await mv(args[1],args[2])}
+    if(args[0] == "rm"){ await rm(args[1])}
     if(args[0] == "os") {
         const result = osCommands[args[1].replace("--","")] // add check for undefined
         console.log(result())
@@ -52,7 +73,7 @@ async function handleInput(data) {
     if(data === ".exit") {
         process.emit("SIGINT");
     }
-    printCommandInfo(`You are currently in ${currentDir}\n`) 
+    
 }
 
 function printCommandInfo(info) {

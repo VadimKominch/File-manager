@@ -1,4 +1,5 @@
 import fs from 'fs'
+import path from 'path'
 
 async function list(dir) {
     fs.readdir(dir,(err, files) => {
@@ -10,10 +11,16 @@ async function list(dir) {
 }
 
 async function up(directory) {
-    return path.join(currentDir, '..')
+    return await path.join(directory, '..')
+}
+
+async function cd(newDest) {
+    const res = await fs.promises.access(newDest,fs.constants.R_OK)
+    return res
 }
 
 export {
     list,
-    up
+    up,
+    cd
 }
